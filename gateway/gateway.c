@@ -14,8 +14,6 @@
 #include <netinet/tcp.h>
 #include <signal.h>
 
-#include "aes256cbc.h"
-
 #define PIPE_SIZE    32768 // splice pipe buffer size
 #define HS_BUFF_SIZE 64    // handshake buffer size
 #define MAX_EVENTS   20    // max epoll event for each epoll frame
