@@ -250,7 +250,7 @@ gw_accept(int pd, int lsn, struct gw_conn *del_poll[]) {
 }
 
 static void
-gw_handshake_in(int pd, struct gw_conn *conn, char *secret) {
+gw_handshake_in(int pd, struct gw_conn *conn) {
 	if (!(conn->events & EPOLLIN))
 		return;
 	
@@ -291,11 +291,6 @@ gw_handshake_in(int pd, struct gw_conn *conn, char *secret) {
 		return;
 	}
 	
-	// decrypt the backend address
-	if (aes256cbc_decrypt(secret, state->buf) == 0) {
-		state->code = HS_BAD_ADDR;
-		return;
-	}
 	
 	// create a nonblock TCP socket
 	int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
@@ -421,7 +416,7 @@ gw_splice_out(struct gw_conn *conn) {
 }
 
 static void
-gw_loop(int pd, int lsn, char *secret) {
+gw_loop(int pd, int lsn) {
 	// Add the connections that want to close into del_poll and close them at the end of event frame. 
 	// Because the connections may be referenced in current event frame.
 	struct gw_conn *del_poll[MAX_EVENTS];
@@ -478,7 +473,7 @@ gw_loop(int pd, int lsn, char *secret) {
 			// doing handshake?
 			// TODO: read/write timeout
 			if (conn->hs_state != NULL) {
-				gw_handshake_in(pd, conn, secret);
+				gw_handshake_in(pd, conn);
 				gw_handshake_out(conn);
 				if (conn->hs_state != NULL)
 					continue;
@@ -529,13 +524,7 @@ gw_loop(int pd, int lsn, char *secret) {
 
 int
 main(int argc, char *argv[]) {
-	// the passphrase for AES256-CBC decrypt
-	char *secret = getenv("GW_SECRET");
-	if (secret == NULL) {
-		fprintf(stderr, "Missing GW_SECRET environment variable\n");
-		return 1;
-	}
-	
+
 	int ret = 1;
 
 	// create a nonblock listener
@@ -584,7 +573,7 @@ main(int argc, char *argv[]) {
 	// event loop
 	ret = 0;
 	fprintf(stderr, "Getway running, pid = %d\n", getpid());
-	gw_loop(pd, lsn, secret);
+	gw_loop(pd, lsn);
 	fprintf(stderr, "Getway killed\n");
 	
 END:
