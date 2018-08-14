@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #define MAXLINE  10
 #define SERV_PROT 8000
@@ -30,6 +31,7 @@ int main(void)
         ch++;
         for(;i<MAXLINE;i++)
             buf[i] = ch;
+        buf[i-1] = '\n';
         ch++;
         write(connfd, buf, sizeof(buf));
         sleep(5);

@@ -29,9 +29,7 @@ int main(void)
  struct epoll_event resevent[10];
  int res, len;
  efd = epoll_create(10);
-/* ET 边沿触发 ，默认是水平触发 */
- event.events = EPOLLIN | EPOLLET;
-/* event.events = EPOLLIN; */
+ event.events = EPOLLIN;
  printf("Accepting connections ...\n");
  cliaddr_len = sizeof(cliaddr);
  connfd = accept(listenfd, (struct sockaddr *)&cliaddr, &cliaddr_len);
@@ -42,10 +40,9 @@ int main(void)
  epoll_ctl(efd, EPOLL_CTL_ADD, connfd, &event);
  while (1) {
   res = epoll_wait(efd, resevent, 10, -1);
-  printf("res %d\n", res);
   if (resevent[0].data.fd == connfd) {
   len = read(connfd, buf, MAXLINE/2);
- write(STDOUT_FILENO, buf, len);
+  write(STDOUT_FILENO, buf, len);
  }
 }
  return 0;
